@@ -77,6 +77,26 @@ $header-shift: 120px;
 	}
 }
 
+// scrolling screens (Hourly, Travel): make the column header bar 4px taller upward, so it
+// overlaps the header band instead of meeting it edge to edge. When the display is scaled
+// (TVs, resized windows) two things showed through as a thin dark line at that edge: the
+// background art's band edge (resampled) and, once the list scrolls, the rows passing under
+// the bar's anti-aliased top edge. The extra height matches the band color, so nothing
+// visibly moves at 1:1.
+$column-header-overlap: 4px;
+
+// covers the art edge: a strip along the bottom of the header, under the header text
+#hourly-html > .header,
+#travel-html > .header {
+	box-shadow: inset 0 (-$column-header-overlap) 0 c.$column-header;
+}
+
+// covers the rows: the bar itself extends up over the top of the scrolling list
+#hourly-html .column-headers,
+#travel-html .column-headers {
+	box-shadow: 0 (-$column-header-overlap) 0 c.$column-header;
+}
+
 // splash screen title/status: upstream uses its own hard 4px shadow; match the soft one
 #loading {
 	@include shadow.text-shadow(4px);
