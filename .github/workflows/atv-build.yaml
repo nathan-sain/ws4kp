@@ -1,0 +1,71 @@
+# ATV fork: build the Docker Compose image, smoke-test it, and publish the generated JSON as an artifact
+name: atv-build
+
+on:
+  push:
+    branches:
+      - atv/main
+  pull_request:
+    branches:
+      - atv/main
+  workflow_dispatch:
+    inputs:
+      refresh_points:
+        description: 'Look up every NWS grid point again instead of using the cache'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Compose build
+    runs-on: ubuntu-latest
+    env:
+      # build the commit under test, not the branch tip on GitHub
+      ATV_SOURCE: .
+      REFRESH_POINTS: ${{ inputs.refresh_points && '1' || '0' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Build image (regenerates JSON, checks Regional map, builds site)
+        run: docker compose --progress plain build
+
+      - name: Start container
+        run: docker compose up -d
+
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 30); do curl -sf http://localhost:8080/manifest.json > /dev/null && break; sleep 1; done
+          for path in / /data/travelcities.json /data/regionalcities.json /data/stations.json \
+            /fonts/atv/ChivoMono-700.woff2 /images/backgrounds/atv/1.png /resources/ws.min.css; do
+            code=$(curl -s -L -o /dev/null -w '%{http_code}' "http://localhost:8080${path}")
+            echo "${code} ${path}"
+            [ "${code}" = "200" ] || exit 1
+          done
+          # every configured community must be in the Travel Forecast data
+          expected=$(node -e "import('./custom/region.config.mjs').then((m) => console.log(m.default.communities.length))")
+          served=$(curl -s http://localhost:8080/data/travelcities.json | grep -o '"Name"' | wc -l)
+          echo "travel cities: ${served} served, ${expected} configured"
+          test "${served}" -eq "${expected}"
+
+      - name: Export generated JSON
+        run: |
+          docker buildx build -f custom/docker/Dockerfile --target export \
+            --build-arg REFRESH_POINTS="${REFRESH_POINTS}" --output type=local,dest=generated-data .
+
+      - name: Upload generated JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws4kp-atv-data
+          path: generated-data/
+
+      - name: Container logs
+        if: always()
+        run: docker compose logs --no-color
+
+      - name: Stop container
+        if: always()
+        run: docker compose down

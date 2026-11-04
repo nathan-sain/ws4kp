@@ -1,0 +1,35 @@
+# ATV fork: build and run with Docker Compose
+#
+#   docker compose build      pulls the source from GitHub, regenerates the JSON data and builds the image
+#   docker compose up -d      serves it on http://localhost:8080
+#
+# Settings (environment or a .env file next to this file):
+#   ATV_SOURCE      build context; default is the atv/main branch on GitHub.
+#                   Use ATV_SOURCE=. to build the local checkout instead,
+#                   or https://github.com/nathan-sain/ws4kp.git#<branch-or-tag> for another ref.
+#   ATV_IMAGE       image name (default ws4kp-atv:latest)
+#   ATV_PORT        host port (default 8080)
+#   REFRESH_POINTS  1 = look up every NWS grid point again instead of using the cache
+#   WSQS_*          default display settings, see custom/.env.example (e.g. WSQS_kiosk=true)
+
+name: ws4kp-atv
+
+services:
+  ws4kp:
+    image: ${ATV_IMAGE:-ws4kp-atv:latest}
+    build:
+      context: ${ATV_SOURCE:-https://github.com/nathan-sain/ws4kp.git#atv/main}
+      dockerfile: custom/docker/Dockerfile
+      target: runtime
+      args:
+        REFRESH_POINTS: ${REFRESH_POINTS:-0}
+    ports:
+      - "${ATV_PORT:-8080}:8080"
+    environment:
+      # default location: central Arkansas (any permalink setting works as WSQS_<name>)
+      WSQS_latLonQuery: ${WSQS_latLonQuery:-Little Rock, AR, USA}
+      WSQS_latLon: ${WSQS_latLon:-{"lat":34.7487,"lon":-92.2749}}
+      # Travel Forecast is off by default upstream; it's the screen built around the ATV communities
+      WSQS_travel: ${WSQS_travel:-true}
+      WSQS_kiosk: ${WSQS_kiosk:-false}
+    restart: unless-stopped

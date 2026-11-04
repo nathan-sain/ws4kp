@@ -27,6 +27,7 @@ custom/
   scripts/check-theme.mjs  fails if upstream adds a color variable we don't define
   scripts/build-fonts.sh   fonts/src -> server/fonts/atv/*.woff2
   scripts/sync-upstream.sh merge upstream + rebuild everything
+  docker/Dockerfile        compose build: data -> checks -> site -> nginx (also an `export` target for the JSON)
   .env.example             default location/displays (copy to ../.env)
 ```
 
@@ -36,6 +37,8 @@ custom/
 |---|---|---|
 | `server/styles/scss/shared/_colors.scss` | replaced with one `@forward` line | theme lives in `custom/theme` |
 | `server/styles/scss/ws.scss` | +1 `@use` line at the end | loads `custom/theme/_overrides.scss` |
+| `compose.yaml` | new file | `docker compose build` / `up` for the ATV image |
+| `.github/workflows/atv-build.yaml` | new file | CI for `atv/main`: compose build, smoke test, JSON artifact |
 | `server/scripts/modules/regionalforecast.mjs` | +1 import, 2 small hooks (marked `ATV fork`) | fixed map center; per-city label offsets |
 | `server/scripts/modules/atv-region.mjs` | new file (generated, committed) | map center from `region.config.mjs` |
 | `server/images/backgrounds/atv/` | new folder | ATV background art; upstream images are left in place |
@@ -59,6 +62,41 @@ custom/scripts/sync-upstream.sh        # pull in a new upstream release
 ```
 
 Behind an HTTPS proxy (CI, cloud sandboxes), prefix Node commands with `NODE_USE_ENV_PROXY=1`, because Node's `fetch` and `https` ignore `HTTPS_PROXY` otherwise.
+
+## Docker Compose build
+
+```bash
+docker compose build        # pulls atv/main from GitHub, regenerates the JSON, builds the image
+docker compose up -d        # serves it on http://localhost:8080
+```
+
+`compose.yaml` builds from `https://github.com/nathan-sain/ws4kp.git#atv/main`, so a machine only needs this one file. `custom/docker/Dockerfile` runs these steps inside the build:
+
+1. `npm ci`
+2. `build-data.mjs` regenerates `travelcities.json`, `regionalcities.json`, `stations.json` and `atv-region.mjs` from `region.config.mjs`. Cached grid points are reused, and any missing one is looked up at api.weather.gov. The build fails if a lookup fails.
+3. `check-regional.mjs` fails the build if a community would be missing from the Regional map.
+4. `npm run build` compiles the theme and bundles the site.
+5. nginx serves `dist/`, the same as upstream's image.
+
+The JSON comes from `region.config.mjs` on every build, so the committed copies in `datagenerators/output/` are only what `npm start` uses.
+
+| Setting (env or `.env`) | Default | |
+|---|---|---|
+| `ATV_SOURCE` | `https://github.com/nathan-sain/ws4kp.git#atv/main` | `.` builds the local checkout; `…git#<branch-or-tag>` builds another ref |
+| `ATV_IMAGE` | `ws4kp-atv:latest` | image name |
+| `ATV_PORT` | `8080` | host port |
+| `REFRESH_POINTS` | `0` | `1` re-looks-up every grid point instead of using the cache |
+| `WSQS_*` | Little Rock, Travel on, kiosk off | any permalink setting (see `.env.example`), applied at container start |
+
+To get just the generated JSON:
+
+```bash
+docker buildx build -f custom/docker/Dockerfile --target export --output type=local,dest=out .
+```
+
+If `atv/main` becomes private, the Git build context needs credentials, for example a `GIT_AUTH_TOKEN` build secret. Alternatively, clone the repo and use `ATV_SOURCE=.`.
+
+**CI:** `.github/workflows/atv-build.yaml` runs on every push and pull request to `atv/main`, and manually with an option to refresh the grid points. It builds the image with `docker compose build`, starts it, and checks that the page, data, fonts and backgrounds load and that every community is in the Travel data. It then uploads the generated JSON as the `ws4kp-atv-data` artifact. Upstream's own workflows only run on upstream's branch names and on pull requests, so they don't fire for `atv/main` pushes.
 
 ## Geography
 

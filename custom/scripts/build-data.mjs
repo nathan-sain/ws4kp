@@ -22,6 +22,7 @@ const ALLOW_MISSING = process.argv.includes('--allow-missing');
 const CACHE_FILE = './custom/data/points-cache.json';
 const OUT = './datagenerators/output';
 const USER_AGENT = '(ws4kp ATV fork data generator)';
+const UPSTREAM_STATIONS_URL = 'https://raw.githubusercontent.com/netbymatt/ws4kp/main/datagenerators/output/stations.json';
 
 const key = (c) => `${c.lat.toFixed(4)},${c.lon.toFixed(4)}`;
 
@@ -31,8 +32,16 @@ const loadUpstreamStations = async () => {
 		const raw = execFileSync('git', ['show', 'upstream/main:datagenerators/output/stations.json'], { maxBuffer: 64 * 1024 * 1024 });
 		return JSON.parse(raw);
 	} catch {
-		console.warn('! upstream/main not available, using local stations.json as the source');
-		return JSON.parse(await readFile(`${OUT}/stations.json`));
+		// no git history (e.g. Docker builds): download upstream's published copy
+		try {
+			const res = await fetch(UPSTREAM_STATIONS_URL, { headers: { 'user-agent': USER_AGENT } });
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			console.log('  stations source: upstream (GitHub raw)');
+			return await res.json();
+		} catch (e) {
+			console.warn(`! upstream stations unavailable (${e.cause?.code ?? e.message}), using local stations.json as the source`);
+			return JSON.parse(await readFile(`${OUT}/stations.json`));
+		}
 	}
 };
 
