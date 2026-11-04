@@ -42,9 +42,38 @@
 }
 
 // header: remove the WeatherStar 4000+ logo on every screen (radar included); the
-// ATV backgrounds carry the brand. Title and clock keep their upstream positions.
+// ATV backgrounds carry the brand.
 .weather-display .header .logo {
 	display: none;
+}
+
+// header: shift titles, NOAA logo and clock left into the logo's space, keeping their spacing.
+// Upstream positions (_weather-display.scss, _radar.scss) minus the shift; title lands at the
+// logo's old x of 50px.
+$header-shift: 120px;
+
+.weather-display>.header {
+	.title.single,
+	.title.dual {
+		left: 170px - $header-shift;
+	}
+
+	.noaa-logo {
+		left: 356px - $header-shift;
+	}
+
+	.date-time {
+		left: 415px - $header-shift;
+	}
+}
+
+// radar's larger title sits 15px left of the others upstream; align it with them instead,
+// so it clears the logo fragment at the left edge of the standard backgrounds
+#radar-html.weather-display,
+#future-radar-html.weather-display {
+	.header .title.dual {
+		left: 170px - $header-shift;
+	}
 }
 
 // Intentionally NOT themed:
