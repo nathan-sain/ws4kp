@@ -1,0 +1,63 @@
+// ATV fork: brand backgrounds (server/images/backgrounds/atv/, from TV.zip)
+// Each rule repeats the upstream selector it replaces, so it wins by coming later at equal specificity.
+// Upstream images stay in place; anything not listed here still uses them.
+//
+// The ATV set follows its own numbering, so files are matched to screens by layout:
+//   atv/1.png       main panel (most screens), also stands in for upstream 1-chart.png
+//   atv/1-wide.png  widescreen side panels behind the 640px display
+//   atv/3.png       three day panels   = Extended Forecast (upstream 2.png)
+//   atv/5.png       header band + open = Almanac           (upstream 3.png)
+//   atv/4.png       radar frame (+ 4-wide)
+//   atv/6.png       SPC Outlook
+// Hazards (7.png, 7-wide.png) are identical to upstream, so they are not overridden.
+//
+// Not supplied yet (upstream art remains): every *-portrait.png, 1-wide-enhanced.png,
+// 3-wide-enhanced.png, 1-chart-wide.png, 1-chart-portrait.png. These only show in the
+// enhanced widescreen and portrait modes.
+
+$bg: '../images/backgrounds/atv';
+
+// _weather-display.scss: every screen's base panel
+.weather-display {
+	background-image: url('#{$bg}/1.png');
+}
+
+// _page.scss: frame behind the displays
+#container {
+	background-image: url('#{$bg}/1.png');
+}
+
+.wide #container {
+	background: url('#{$bg}/1-wide.png');
+	background-repeat: no-repeat;
+}
+
+// _hourly-graph.scss: no ATV chart art yet; atv/1.png's panel lines up with the chart area
+#hourly-graph-html {
+	background-image: url('#{$bg}/1.png');
+}
+
+// _extended-forecast.scss
+#extended-forecast-html.weather-display {
+	background-image: url('#{$bg}/3.png');
+}
+
+// _almanac.scss
+#almanac-html.weather-display {
+	background-image: url('#{$bg}/5.png');
+}
+
+// _radar.scss
+#radar-html.weather-display,
+#future-radar-html.weather-display {
+	background-image: url('#{$bg}/4.png');
+
+	.wide & {
+		background: url('#{$bg}/4-wide.png');
+	}
+}
+
+// _spc-outlook.scss
+#spc-outlook-html.weather-display {
+	background-image: url('#{$bg}/6.png');
+}

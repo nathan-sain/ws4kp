@@ -19,6 +19,7 @@ custom/
   theme/_colors.scss       brand palette + mapping onto upstream color variables  <- and this
   theme/_overrides.scss    brand fixes for colors upstream hard-codes elsewhere
   theme/_fonts.scss        Chivo Mono replaces the Star4000 faces
+  theme/_backgrounds.scss  points each screen at the ATV backgrounds
   fonts/src/               Chivo Mono variable font + OFL license (source for build-fonts.sh)
   data/points-cache.json   NWS grid points per community (generated, committed)
   scripts/build-data.mjs   region.config -> datagenerators/output/*.json + atv-region.mjs
@@ -37,6 +38,7 @@ custom/
 | `server/styles/scss/ws.scss` | +1 `@use` line at the end | loads `custom/theme/_overrides.scss` |
 | `server/scripts/modules/regionalforecast.mjs` | +1 import, 2 small hooks (marked `ATV fork`) | fixed map center; per-city label offsets |
 | `server/scripts/modules/atv-region.mjs` | new file (generated, committed) | map center from `region.config.mjs` |
+| `server/images/backgrounds/atv/` | new folder | ATV background art; upstream images are left in place |
 | `server/fonts/atv/` | new folder (generated, committed) | web fonts + OFL; served and copied to `dist/` like upstream fonts |
 | `.gitattributes` | +6 lines | generated files use `merge=ours` |
 | `datagenerators/output/*.json` | regenerated | Arkansas data |
@@ -75,7 +77,24 @@ Behind an HTTPS proxy (CI, cloud sandboxes), prefix Node commands with `NODE_USE
 
 `theme/_colors.scss` defines the brand palette as `$atv-*` variables and maps them onto upstream's 16 semantic variables (`$title-color`, `$column-header`, ...). Change a mapping there; don't edit upstream SCSS.
 
-The CRT frame and panel artwork are PNGs in `server/images/backgrounds/`. They are still upstream's blue and orange, so they won't match the green theme until the backgrounds are redone (planned step 4).
+### Backgrounds
+
+ATV art lives in `server/images/backgrounds/atv/`, and `theme/_backgrounds.scss` repoints each screen to it, so upstream's images stay untouched. The ATV set uses its own numbering, so files are matched to screens by layout:
+
+| ATV file | Screen | Replaces upstream |
+|---|---|---|
+| `1.png` | most screens; stand-in for the Hourly Graph | `1.png`, `1-chart.png` |
+| `1-wide.png` | widescreen side panels (ATV logo + photo) | `1-wide.png` |
+| `3.png` | Extended Forecast (three day panels) | `2.png` |
+| `5.png` | Almanac | `3.png` |
+| `4.png`, `4-wide.png` | Local and Future Radar | same names |
+| `6.png` | SPC Outlook | `6.png` |
+
+Hazards (`7.png`, `7-wide.png`) are identical to upstream, so they aren't overridden.
+
+Still upstream art, used only in enhanced modes: all `*-portrait.png`, `1-wide-enhanced.png`, `3-wide-enhanced.png`, `1-chart-wide.png` and `1-chart-portrait.png`. A dedicated `1-chart.png` would also suit the Hourly Graph better than the `1.png` stand-in.
+
+To add or replace art, drop the PNG into `atv/` at upstream's pixel size (640×480, 854×480 wide, 640×1137 portrait). Add a rule in `_backgrounds.scss` that repeats the upstream selector, then run `npm run build:css`.
 
 ## Fonts
 
