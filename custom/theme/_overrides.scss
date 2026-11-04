@@ -4,6 +4,7 @@
 @use 'colors' as c;
 @use 'fonts';
 @use 'backgrounds';
+@use 'shadow';
 
 // splash/"enter a location" screen title and status text (upstream: yellow)
 #loading {
@@ -74,6 +75,11 @@ $header-shift: 120px;
 	.header .title.dual {
 		left: 170px - $header-shift;
 	}
+}
+
+// splash screen title/status: upstream uses its own hard 4px shadow; match the soft one
+#loading {
+	@include shadow.text-shadow(4px);
 }
 
 // Intentionally NOT themed:

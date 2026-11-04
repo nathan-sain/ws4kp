@@ -20,6 +20,7 @@ custom/
   theme/_overrides.scss    brand fixes for colors upstream hard-codes elsewhere
   theme/_fonts.scss        Chivo Mono replaces the Star4000 faces
   theme/_backgrounds.scss  points each screen at the ATV backgrounds
+  theme/_shadow.scss       softer text shadow (tuning variables at the top)
   fonts/src/               Chivo Mono variable font + OFL license (source for build-fonts.sh)
   data/points-cache.json   NWS grid points per community (generated, committed)
   scripts/build-data.mjs   region.config -> datagenerators/output/*.json + atv-region.mjs
@@ -36,6 +37,7 @@ custom/
 | File | Change | Why |
 |---|---|---|
 | `server/styles/scss/shared/_colors.scss` | replaced with one `@forward` line | theme lives in `custom/theme` |
+| `server/styles/scss/shared/_utils.scss` | `text-shadow()` mixin body replaced by a call into `custom/theme/_shadow.scss` (+1 `@use`) | softer shadow on every screen without touching ~20 call sites |
 | `server/styles/scss/ws.scss` | +1 `@use` line at the end | loads `custom/theme/_overrides.scss` |
 | `compose.yaml` | new file | `docker compose build` / `up` for the ATV image |
 | `.github/workflows/atv-build.yaml` | new file | CI for `atv/main`: compose build, smoke test, JSON artifact |

@@ -1,0 +1,30 @@
+// ATV fork: softer text shadow, kept close to the characters.
+// Upstream's u.text-shadow() mixin (server/styles/scss/shared/_utils.scss) delegates here,
+// so every screen picks it up with the same call sites and arguments.
+//
+// Upstream draws a hard 1.5px outline in 8 directions plus a hard 3px drop shadow.
+// This draws a short blurred drop shadow plus a thin soft outline, which still keeps
+// light text readable on the light sky areas of the ATV backgrounds (e.g. Almanac).
+@use 'sass:math';
+@use 'sass:color';
+@use 'colors' as c;
+
+// tune here
+$drop-scale: 0.5; // drop distance as a fraction of upstream's offset (3px -> 1.5px)
+$drop-blur: 2px;
+$drop-opacity: 0.85;
+$outline-blur: 1px; // tight, nearly solid edge
+$halo-blur: 2px; // soft falloff around the edge
+$halo-opacity: 0.6;
+
+// same signature as upstream: $offset = drop distance, $outline = outline width
+@mixin text-shadow($offset: 3px, $outline: 1.5px) {
+	$drop: $offset * $drop-scale;
+	// upstream's default outline is 1.5px; scale the soft outline with it
+	$k: math.div($outline, 1.5px);
+
+	text-shadow:
+		$drop $drop $drop-blur color.change(c.$text-shadow, $alpha: $drop-opacity),
+		0 0 ($outline-blur * $k) c.$text-shadow,
+		0 0 ($halo-blur * $k) color.change(c.$text-shadow, $alpha: $halo-opacity);
+}
