@@ -1,0 +1,39 @@
+// ATV fork: Chivo Mono replaces the Star4000 bitmap faces.
+//
+// Each rule re-declares an upstream family name, so the ~30 upstream `font-family`
+// rules keep working unchanged. This file is loaded after upstream's @font-face rules
+// (see custom/theme/_overrides.scss), and the later rule for the same family wins.
+//
+// How the numbers were chosen (measured against live screens, see custom/README.md):
+//   size-adjust      scales Chivo Mono's 0.600em character cell to the Star4000 face's
+//                    advance width, so fixed-width columns and space-aligned text still fit.
+//   *-override       restore Star4000's line box (ascent .905, descent .212, gap .033 em),
+//                    divided by size-adjust, so baselines and line heights do not move.
+
+@use 'sass:math';
+
+// Star4000 line box, in em of the specified font size
+$star-ascent: 0.905;
+$star-descent: 0.212;
+$star-line-gap: 0.033;
+
+@mixin alias($family, $file, $size-adjust) {
+	@font-face {
+		font-family: $family;
+		src: url('../fonts/atv/#{$file}') format('woff2');
+		font-display: swap;
+		size-adjust: $size-adjust * 100%;
+		ascent-override: math.div($star-ascent, $size-adjust) * 100%;
+		descent-override: math.div($star-descent, $size-adjust) * 100%;
+		line-gap-override: math.div($star-line-gap, $size-adjust) * 100%;
+	}
+}
+
+// main text (titles, forecasts, tables): Star4000 cell is 0.475em
+@include alias('Star4000', 'ChivoMono-700.woff2', 0.795);
+// current-conditions labels
+@include alias('Star4000 Extended', 'ChivoMono-700.woff2', 0.73);
+// big numbers and city names: Star4000 Large cell is 0.602em
+@include alias('Star4000 Large', 'ChivoMono-700.woff2', 1.0);
+// clock, column headers, graph labels: kept short so glyphs stay inside the header bars
+@include alias('Star4000 Small', 'ChivoMono-600.woff2', 0.65);

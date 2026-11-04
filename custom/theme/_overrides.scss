@@ -2,6 +2,7 @@
 // Loaded last from server/styles/scss/ws.scss, so these rules win on equal specificity.
 // Keep rules here (not in upstream files) to keep upstream merges conflict-free.
 @use 'colors' as c;
+@use 'fonts';
 
 // splash/"enter a location" screen title and status text (upstream: yellow)
 #loading {
@@ -29,6 +30,14 @@
 		--text: #{c.$atv-cloud};
 		--muted: #{c.$atv-sage};
 	}
+}
+
+// labels that used the all-caps Star4000 Small face; Chivo Mono has real lowercase
+.weather-display .main.hourly .column-headers div,
+.weather-display .latest-observations .column-headers div,
+#hourly-graph-html .legend,
+.weather-display .main.hourly-graph .chart-container .label {
+	text-transform: uppercase;
 }
 
 // Intentionally NOT themed:
