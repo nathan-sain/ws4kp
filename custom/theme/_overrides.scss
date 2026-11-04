@@ -41,6 +41,12 @@
 	text-transform: uppercase;
 }
 
+// header: remove the WeatherStar 4000+ logo on every screen (radar included); the
+// ATV backgrounds carry the brand. Title and clock keep their upstream positions.
+.weather-display .header .logo {
+	display: none;
+}
+
 // Intentionally NOT themed:
 // - radar legend (_radar.scss): precipitation intensity colors are data, not brand
 // - status colors (shared/_utils.scss): loading/failed meanings rely on yellow/red
