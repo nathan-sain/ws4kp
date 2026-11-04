@@ -21,7 +21,8 @@ custom/
   theme/_fonts.scss        Chivo Mono replaces the Star4000 faces
   fonts/src/               Chivo Mono variable font + OFL license (source for build-fonts.sh)
   data/points-cache.json   NWS grid points per community (generated, committed)
-  scripts/build-data.mjs   region.config -> datagenerators/output/*.json
+  scripts/build-data.mjs   region.config -> datagenerators/output/*.json + atv-region.mjs
+  scripts/check-regional.mjs  fails if a community is missing/duplicated on the Regional map
   scripts/check-theme.mjs  fails if upstream adds a color variable we don't define
   scripts/build-fonts.sh   fonts/src -> server/fonts/atv/*.woff2
   scripts/sync-upstream.sh merge upstream + rebuild everything
@@ -34,6 +35,8 @@ custom/
 |---|---|---|
 | `server/styles/scss/shared/_colors.scss` | replaced with one `@forward` line | theme lives in `custom/theme` |
 | `server/styles/scss/ws.scss` | +1 `@use` line at the end | loads `custom/theme/_overrides.scss` |
+| `server/scripts/modules/regionalforecast.mjs` | +1 import, 2 small hooks (marked `ATV fork`) | fixed map center; per-city label offsets |
+| `server/scripts/modules/atv-region.mjs` | new file (generated, committed) | map center from `region.config.mjs` |
 | `server/fonts/atv/` | new folder (generated, committed) | web fonts + OFL; served and copied to `dist/` like upstream fonts |
 | `.gitattributes` | +6 lines | generated files use `merge=ours` |
 | `datagenerators/output/*.json` | regenerated | Arkansas data |
@@ -45,6 +48,7 @@ Keep this table up to date when adding a new touch point.
 
 ```bash
 node custom/scripts/build-data.mjs     # after editing region.config.mjs (needs api.weather.gov for new cities)
+node custom/scripts/check-regional.mjs # after moving/adding communities or offsets
 npm run build:css                      # after editing custom/theme/*
 custom/scripts/build-fonts.sh          # after changing fonts/src (needs: pip install fonttools brotli)
 npm start                              # dev server on http://localhost:8080
@@ -59,7 +63,11 @@ Behind an HTTPS proxy (CI, cloud sandboxes), prefix Node commands with `NODE_USE
 `region.config.mjs` lists 7 communities covering Arkansas's corners and its north/south regions: Fayetteville (NW), Jonesboro (NE), Fort Smith (W), Little Rock (central), Pine Bluff (SE), Texarkana (SW) and El Dorado (S).
 
 - **Travel Forecast** shows exactly these communities. Each one needs an NWS grid point in `data/points-cache.json`.
-- **Regional map** places these communities around the viewer's location and drops labels that would overlap. The window is about 11° wide but only about 4–5° tall. From Little Rock it currently shows Fort Smith, Jonesboro, Little Rock and El Dorado: Fayetteville and Texarkana fall outside the window, and Pine Bluff overlaps Little Rock.
+- **Regional map** shows all 7 communities in standard and widescreen modes, wherever the display is located.
+  - `regionalMap.center` fixes the map on central Arkansas instead of the viewer. The map window is only about 4° tall, so centering on a viewer in Fayetteville would push El Dorado and Texarkana off the map. Set it to `null` for upstream behavior.
+  - The app drops any label whose 136×60 px box overlaps a closer one. Pine Bluff/Little Rock, Fayetteville/Fort Smith and Texarkana/El Dorado sit too close for that, so `mapOffset` nudges four labels by 11–25 px (the number stays with its label). Stations get the same nudge, so a community is never drawn twice.
+  - Portrait + enhanced mode uses 26 px taller boxes and still drops 3 communities. It would need separate offsets for that mode if portrait displays are used.
+  - `check-regional.mjs` reruns the app's placement logic for every mode, and `sync-upstream.sh` runs it after each merge.
 - **Latest Observations** and current-conditions names use `stations.json`. With `stationsMode: 'communities'`, only the 7 community stations ship, labeled with the community names. Switch to `'region'` to include every station inside `bounds`. This fills the map more densely but shows non-ATV places.
 - **Location search** still accepts any US address. To pin the display to one place, set `WSQS_latLon`/`WSQS_latLonQuery` (and optionally `WSQS_kiosk=true`) in `.env`.
 

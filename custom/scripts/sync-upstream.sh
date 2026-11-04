@@ -32,11 +32,14 @@ node custom/scripts/check-theme.mjs
 echo "→ geographic data"
 node custom/scripts/build-data.mjs --offline
 
+echo "→ regional map"
+node custom/scripts/check-regional.mjs
+
 echo "→ css"
 npm run build:css
 
 if [ -n "$(git status --porcelain)" ]; then
-	git add -A datagenerators/output custom/data server/styles/ws.min.css server/styles/ws.min.css.map
+	git add -A datagenerators/output custom/data server/scripts/modules/atv-region.mjs server/styles/ws.min.css server/styles/ws.min.css.map
 	git commit -m "Rebuild ATV data and theme after upstream sync ($REF)"
 fi
 

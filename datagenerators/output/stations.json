@@ -5,7 +5,11 @@
 		"lon": -92.814,
 		"state": "AR",
 		"city": "El Dorado",
-		"priority": 3
+		"priority": 3,
+		"offset": [
+			24,
+			7
+		]
 	},
 	"KFSM": {
 		"id": "KFSM",
@@ -21,7 +25,11 @@
 		"lon": -94.16778,
 		"state": "AR",
 		"city": "Fayetteville",
-		"priority": 12
+		"priority": 12,
+		"offset": [
+			0,
+			-21
+		]
 	},
 	"KJBR": {
 		"id": "KJBR",
@@ -37,7 +45,11 @@
 		"lon": -92.23611,
 		"state": "AR",
 		"city": "Little Rock",
-		"priority": 12
+		"priority": 12,
+		"offset": [
+			0,
+			-11
+		]
 	},
 	"KPBF": {
 		"id": "KPBF",
@@ -45,7 +57,11 @@
 		"lon": -91.93472,
 		"state": "AR",
 		"city": "Pine Bluff",
-		"priority": 12
+		"priority": 12,
+		"offset": [
+			0,
+			15
+		]
 	},
 	"KTXK": {
 		"id": "KTXK",
