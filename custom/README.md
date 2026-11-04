@@ -47,6 +47,8 @@ npm run build                          # static build in dist/ (Docker builds do
 custom/scripts/sync-upstream.sh        # pull in a new upstream release
 ```
 
+Behind an HTTPS proxy (CI, cloud sandboxes), prefix Node commands with `NODE_USE_ENV_PROXY=1`, because Node's `fetch` and `https` ignore `HTTPS_PROXY` otherwise.
+
 ## Geography
 
 `region.config.mjs` lists 7 communities covering Arkansas's corners and its north/south regions: Fayetteville (NW), Jonesboro (NE), Fort Smith (W), Little Rock (central), Pine Bluff (SE), Texarkana (SW) and El Dorado (S).

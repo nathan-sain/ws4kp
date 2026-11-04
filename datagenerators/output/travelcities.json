@@ -1,5 +1,25 @@
 [
 	{
+		"Name": "Fayetteville",
+		"Latitude": 36.0626,
+		"Longitude": -94.1574,
+		"point": {
+			"x": 107,
+			"y": 100,
+			"wfo": "TSA"
+		}
+	},
+	{
+		"Name": "Jonesboro",
+		"Latitude": 35.8423,
+		"Longitude": -90.7043,
+		"point": {
+			"x": 17,
+			"y": 97,
+			"wfo": "MEG"
+		}
+	},
+	{
 		"Name": "Fort Smith",
 		"Latitude": 35.3847,
 		"Longitude": -94.4214,
@@ -20,12 +40,32 @@
 		}
 	},
 	{
+		"Name": "Pine Bluff",
+		"Latitude": 34.2284,
+		"Longitude": -92.0032,
+		"point": {
+			"x": 93,
+			"y": 50,
+			"wfo": "LZK"
+		}
+	},
+	{
 		"Name": "Texarkana",
 		"Latitude": 33.4259,
 		"Longitude": -94.0485,
 		"point": {
 			"x": 62,
 			"y": 108,
+			"wfo": "SHV"
+		}
+	},
+	{
+		"Name": "El Dorado",
+		"Latitude": 33.2076,
+		"Longitude": -92.6663,
+		"point": {
+			"x": 113,
+			"y": 99,
 			"wfo": "SHV"
 		}
 	}

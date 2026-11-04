@@ -3,12 +3,22 @@
 		"city": "Fayetteville",
 		"lat": "36.0626",
 		"lon": "-94.1574",
+		"point": {
+			"x": 107,
+			"y": 100,
+			"wfo": "TSA"
+		},
 		"id": "KFYV"
 	},
 	{
 		"city": "Jonesboro",
 		"lat": "35.8423",
 		"lon": "-90.7043",
+		"point": {
+			"x": 17,
+			"y": 97,
+			"wfo": "MEG"
+		},
 		"id": "KJBR"
 	},
 	{
@@ -37,6 +47,11 @@
 		"city": "Pine Bluff",
 		"lat": "34.2284",
 		"lon": "-92.0032",
+		"point": {
+			"x": 93,
+			"y": 50,
+			"wfo": "LZK"
+		},
 		"id": "KPBF"
 	},
 	{
@@ -54,6 +69,11 @@
 		"city": "El Dorado",
 		"lat": "33.2076",
 		"lon": "-92.6663",
+		"point": {
+			"x": 113,
+			"y": 99,
+			"wfo": "SHV"
+		},
 		"id": "KELD"
 	}
 ]
