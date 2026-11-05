@@ -4,7 +4,9 @@
 #   data     installs dependencies, regenerates the geographic JSON from custom/region.config.mjs
 #            and verifies the Regional map, then builds the static site into dist/
 #   export   just the generated JSON files (docker buildx build --target export --output ...)
-#   runtime  nginx serving dist/ (same as upstream's Dockerfile)
+#   runtime  the Node server in production mode (NODE_ENV=production, DIST=1), as upstream's
+#            Dockerfile.server: serves dist/ and runs the caching proxy for weather.gov, radar,
+#            SPC and the other data sources, so every screen shares one cache
 #
 # Build args
 #   REFRESH_POINTS=1  ignore custom/data/points-cache.json and look every NWS grid point up again
@@ -31,20 +33,35 @@ FROM scratch AS export
 COPY --from=data /app/datagenerators/output/travelcities.json /app/datagenerators/output/regionalcities.json /app/datagenerators/output/stations.json /
 COPY --from=data /app/custom/data/points-cache.json /
 
-FROM nginx:alpine AS runtime
+FROM node:24-alpine AS runtime
+WORKDIR /app
 
 LABEL org.opencontainers.image.title="ws4kp-atv" \
 	org.opencontainers.image.description="WeatherStar 4000+ customized for ATV (Arkansas)" \
 	org.opencontainers.image.source="https://github.com/nathan-sain/ws4kp"
 
-COPY static-env-handler.sh /docker-entrypoint.d/01-static-env-handler.sh
-RUN chmod +x /docker-entrypoint.d/01-static-env-handler.sh
+# production server: pre-built files from dist/ plus the caching proxy (index.mjs)
+ENV NODE_ENV=production \
+	DIST=1
 
-COPY --from=data /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+# only what index.mjs reads in DIST mode
+COPY index.mjs ./
+COPY proxy ./proxy
+COPY src ./src
+COPY views ./views
+COPY server/music ./server/music
+COPY --from=data /app/datagenerators/output/travelcities.json /app/datagenerators/output/regionalcities.json /app/datagenerators/output/stations.json ./datagenerators/output/
+COPY --from=data /app/dist ./dist
+
+# the app only reads files, so the unprivileged user from the node image is enough
+USER node
 
 EXPOSE 8080
-HEALTHCHECK --interval=60s --timeout=5s --start-period=15s --retries=3 \
-	CMD wget -q --spider "http://127.0.0.1:8080/manifest.json" || exit 1
+# -Y off: a local check must not go through an HTTP proxy the host may set for outbound requests
+HEALTHCHECK --interval=60s --timeout=5s --start-period=30s --retries=3 \
+	CMD wget -q -Y off --spider "http://127.0.0.1:${WS4KP_PORT:-8080}/manifest.json" || exit 1
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "index.mjs"]

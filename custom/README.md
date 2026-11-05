@@ -83,7 +83,7 @@ docker compose up -d        # serves it on http://localhost:8080
 2. `build-data.mjs` regenerates `travelcities.json`, `regionalcities.json`, `stations.json` and `atv-region.mjs` from `region.config.mjs`. Cached grid points are reused, and any missing one is looked up at api.weather.gov. The build fails if a lookup fails.
 3. `check-regional.mjs` fails the build if a community would be missing from the Regional map.
 4. `npm run build` compiles the theme and bundles the site.
-5. nginx serves `dist/`, the same as upstream's image.
+5. The runtime image runs the Node server in production mode, `NODE_ENV=production` and `DIST=1`, the same as upstream's `Dockerfile.server`. It serves `dist/` and runs the caching proxy for api.weather.gov and the other data sources: radar, HRRR, SPC, Iowa Mesonet and forecast. The browser only talks to this server, so repeat requests and rotation switches are answered from the server's cache, and an expired copy is served if NWS has a short outage. The container runs as the unprivileged `node` user. `WSQS_*` defaults are applied by the server (an HTTP redirect on `/`), and `WS4KP_PORT` changes the port inside the container.
 
 The JSON comes from `region.config.mjs` on every build, so the committed copies in `datagenerators/output/` are only what `npm start` uses.
 

@@ -3,6 +3,10 @@
 #   docker compose build      pulls the source from GitHub, regenerates the JSON data and builds the image
 #   docker compose up -d      serves it on http://localhost:8080
 #
+# The image runs the Node server in production mode (NODE_ENV=production, DIST=1, set in
+# custom/docker/Dockerfile): it serves the built site and a caching proxy for weather.gov and the
+# other data sources, so the display's requests share one server-side cache.
+#
 # Settings (environment or a .env file next to this file):
 #   ATV_SOURCE      build context; default is the atv/main branch on GitHub.
 #                   Use ATV_SOURCE=. to build the local checkout instead,

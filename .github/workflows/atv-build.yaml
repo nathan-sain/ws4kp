@@ -38,13 +38,18 @@ jobs:
 
       - name: Smoke test
         run: |
-          for i in $(seq 1 30); do curl -sf http://localhost:8080/manifest.json > /dev/null && break; sleep 1; done
+          for i in $(seq 1 60); do curl -sf http://localhost:8080/manifest.json > /dev/null && break; sleep 1; done
           for path in / /data/travelcities.json /data/regionalcities.json /data/stations.json \
             /fonts/atv/ChivoMono-700.woff2 /images/backgrounds/atv/1.png /resources/ws.min.css; do
             code=$(curl -s -L -o /dev/null -w '%{http_code}' "http://localhost:8080${path}")
             echo "${code} ${path}"
             [ "${code}" = "200" ] || exit 1
           done
+          # the production server's caching proxy: the second request must come from its cache
+          curl -sf http://localhost:8080/api/points/34.7487,-92.2749 > /dev/null
+          curl -sf http://localhost:8080/api/points/34.7487,-92.2749 > /dev/null
+          docker compose logs --no-color | grep -q 'Hit      | https://api.weather.gov/points/34.7487,-92.2749'
+          echo "caching proxy: OK"
           # every configured community must be in the Travel Forecast data
           expected=$(node -e "import('./custom/region.config.mjs').then((m) => console.log(m.default.communities.length))")
           served=$(curl -s http://localhost:8080/data/travelcities.json | grep -o '"Name"' | wc -l)
