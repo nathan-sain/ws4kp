@@ -27,6 +27,7 @@ custom/
   scripts/check-regional.mjs  fails if a community is missing/duplicated on the Regional map
   scripts/check-theme.mjs  fails if upstream adds a color variable we don't define
   scripts/build-fonts.sh   fonts/src -> server/fonts/atv/*.woff2
+  scripts/make-enhanced-backgrounds.py  ATV art -> atv/*-wide-enhanced.png
   scripts/sync-upstream.sh merge upstream + rebuild everything
   docker/Dockerfile        compose build: data -> checks -> site -> nginx (also an `export` target for the JSON)
   .env.example             default location/displays (copy to ../.env)
@@ -132,7 +133,16 @@ ATV art lives in `server/images/backgrounds/atv/`, and `theme/_backgrounds.scss`
 
 Hazards (`7.png`, `7-wide.png`) are identical to upstream, so they aren't overridden.
 
-Still upstream art, used only in enhanced modes: all `*-portrait.png`, `1-wide-enhanced.png`, `3-wide-enhanced.png`, `1-chart-wide.png` and `1-chart-portrait.png`. A dedicated `1-chart.png` would also suit the Hourly Graph better than the `1.png` stand-in.
+Widescreen + enhanced mode widens several screens to 854 px, and the ATV set had no art for that. `custom/scripts/make-enhanced-backgrounds.py` (needs Pillow) generates it from the ATV files:
+
+| Generated file | From | Used by |
+|---|---|---|
+| `1-wide-enhanced.png` | `1-wide.png` with its panel widened to upstream's enhanced panel (x 52–797) | Current Conditions, Latest Observations, Local Forecast, Regional, Climate, Hourly Graph |
+| `3-wide-enhanced.png` | `5.png` stretched to 854 px (edges unscaled) in the `1-wide.png` header and bottom bar | Almanac |
+
+Rerun the script after changing `1-wide.png` or `5.png`, or replace the outputs with designer-made files.
+
+Still upstream art, used only in portrait + enhanced mode: all `*-portrait.png` and `1-chart-portrait.png`. A dedicated `1-chart.png` would also suit the Hourly Graph better than the `1.png` stand-in.
 
 To add or replace art, drop the PNG into `atv/` at upstream's pixel size (640×480, 854×480 wide, 640×1137 portrait). Add a rule in `_backgrounds.scss` that repeats the upstream selector, then run `npm run build:css`.
 
