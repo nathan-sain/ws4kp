@@ -11,6 +11,7 @@
 #   ATV_PORT        host port (default 8080)
 #   REFRESH_POINTS  1 = look up every NWS grid point again instead of using the cache
 #   WSQS_*          default display settings, see custom/.env.example (e.g. WSQS_kiosk=true)
+#   WSQS_rotate     rotate between the Regional map's communities (default true)
 
 name: ws4kp-atv
 
@@ -32,4 +33,6 @@ services:
       # Travel Forecast is off by default upstream; it's the screen built around the ATV communities
       WSQS_travel: ${WSQS_travel:-true}
       WSQS_kiosk: ${WSQS_kiosk:-false}
+      # rotate between the Regional map's communities, one full cycle each (false to stay on one city)
+      WSQS_rotate: ${WSQS_rotate:-true}
     restart: unless-stopped

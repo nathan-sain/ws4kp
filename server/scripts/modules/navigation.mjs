@@ -14,6 +14,19 @@ let wrapHandler = null;
 const setWrapHandler = (handler) => {
 	wrapHandler = handler;
 };
+// ATV fork: a display kept on screen while the next location loads (rotation), so the output
+// never goes blank; it is swapped for the new location's first display in the same frame
+let holdDisplay = null;
+const holdCurrentDisplay = () => {
+	holdDisplay = displays.find((display) => display?.active) ?? null;
+	// stop its timer: it stays visible but doesn't advance
+	holdDisplay?.resetNavBaseCount();
+	return !!holdDisplay;
+};
+const releaseHeldDisplay = () => {
+	holdDisplay?.hideCanvas();
+	holdDisplay = null;
+};
 let playing = false;
 let progress;
 // false until a location is entered, and again after the reset button
@@ -73,10 +86,11 @@ const updateStatus = (value) => {
 	// if this is the first display and we're playing, load it up so it starts playing
 	if (isPlaying() && value.id === firstDisplayIndex && value.status === STATUS.loaded) {
 		navTo(msg.command.firstFrame);
-	} else if (isPlaying() && currentDisplayIndex() === -1 && countLoadedDisplays() === displays.length) {
+	} else if (isPlaying() && (holdDisplay || currentDisplayIndex() === -1) && countLoadedDisplays() === displays.length) {
 		// backup case for when the first display has no data or an error, find the next available once all have loaded
 		const alternateFirstDisplay = displays.find((display) => display?.enabled && display?.timing?.totalScreens > 0 && display?.status === STATUS.loaded);
-		showDisplay(alternateFirstDisplay);
+		// ATV fork: nothing may be loaded yet (e.g. hazards off, other displays still loading)
+		if (alternateFirstDisplay) showDisplay(alternateFirstDisplay);
 	}
 };
 
@@ -119,8 +133,8 @@ const displayNavMessage = (myMessage) => {
 // navigate to next or previous
 const navTo = (direction) => {
 	if (!locationActive) return;
-	// test for a current display
-	const current = currentDisplay();
+	// test for a current display (ATV fork: a display held over from the previous location doesn't count)
+	const current = holdDisplay ? undefined : currentDisplay();
 	if (progress) progress.hideCanvas();
 	if (!current) {
 		// special case for no active displays (typically on progress screen)
@@ -139,6 +153,9 @@ const navTo = (direction) => {
 		} while (!firstDisplay && displayCount < displays.length);
 
 		if (!firstDisplay) return;
+
+		// ATV fork: replace the held display in this same frame
+		releaseHeldDisplay();
 
 		// In kiosk mode, hide the loading screen when we start showing the first display
 		if (settings?.kiosk?.value) {
@@ -202,6 +219,7 @@ const showDisplay = (display) => {
 	if (!locationActive) return;
 	if (display.status !== STATUS.loaded || !display.canShowOnRequest()) return;
 	if (progress) progress.hideCanvas();
+	holdDisplay = null; // ATV fork: hidden with the rest just below
 	hideAllCanvases();
 	// after hiding, so a display that is already showing starts over
 	display.prepareShowOnRequest();
@@ -317,8 +335,9 @@ const registerProgress = (_progress) => {
 // location.mjs calls this, so navigation doesn't need to import it
 const startDisplays = async (weatherParameters) => {
 	locationActive = true;
-	hideAllCanvases();
-	if (!settings?.kiosk?.value) {
+	// ATV fork: while a display is held (rotation) leave it on screen and skip the progress screen
+	if (!holdDisplay) hideAllCanvases();
+	if (!settings?.kiosk?.value && !holdDisplay) {
 		// In normal mode, hide loading screen and show progress
 		// (In kiosk mode, keep the loading screen visible until autoplay starts)
 		document.querySelector('#loading').style.display = 'none';
@@ -347,6 +366,7 @@ const resetDisplays = () => {
 
 export {
 	setWrapHandler,
+	holdCurrentDisplay,
 	updateStatus,
 	resetDisplays,
 	isLocationActive,

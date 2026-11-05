@@ -42,6 +42,9 @@ custom/
 | `server/styles/scss/ws.scss` | +1 `@use` line at the end | loads `custom/theme/_overrides.scss` |
 | `compose.yaml` | new file | `docker compose build` / `up` for the ATV image |
 | `.github/workflows/atv-build.yaml` | new file | CI for `atv/main`: compose build, smoke test, JSON artifact |
+| `server/scripts/modules/navigation.mjs` | small hooks (marked `ATV fork`): cycle-wrap handler, hold the current display during a location change, guard for an upstream `showDisplay(undefined)` | location rotation without blank frames |
+| `server/scripts/index.mjs` | +1 import | loads `modules/atv-rotation.mjs` |
+| `server/scripts/modules/atv-rotation.mjs` | new file | location rotation |
 | `server/scripts/modules/regionalforecast.mjs` | +1 import, 2 small hooks (marked `ATV fork`) | fixed map center; per-city label offsets |
 | `server/scripts/modules/atv-region.mjs` | new file (generated, committed) | map center from `region.config.mjs` |
 | `server/images/backgrounds/atv/` | new folder | ATV background art; upstream images are left in place |
@@ -100,6 +103,16 @@ docker buildx build -f custom/docker/Dockerfile --target export --output type=lo
 If `atv/main` becomes private, the Git build context needs credentials, for example a `GIT_AUTH_TOKEN` build secret. Alternatively, clone the repo and use `ATV_SOURCE=.`.
 
 **CI:** `.github/workflows/atv-build.yaml` runs on every push and pull request to `atv/main`, and manually with an option to refresh the grid points. It builds the image with `docker compose build`, starts it, and checks that the page, data, fonts and backgrounds load and that every community is in the Travel data. It then uploads the generated JSON as the `ws4kp-atv-data` artifact. Upstream's own workflows only run on upstream's branch names and on pull requests, so they don't fire for `atv/main` pushes.
+
+## Location rotation
+
+The display rotates between the Regional map's communities (`regionalcities.json`, in `region.config.mjs` order). After each full cycle of the enabled screens, it loads the next city and plays every screen for it, starting from the city after the configured location. It's on by default in `compose.yaml` (`WSQS_rotate=true`). Elsewhere, add `?rotate=true` to the URL. `rotateCycles=N` holds each city for N cycles (default 1). Both are kept in the Share permalink, and `?debug=rotation` logs each switch to the browser console.
+
+**Broadcast-safe:** the last screen stays on air while the next city loads, then the new city's first screen replaces it in the same frame. There's no blank frame, progress screen or title card between cities. Tested in Chrome fullscreen at 1920×1080: zero such frames across city switches, checked on every painted frame. If a city doesn't start playing within 30 s (for example, the NWS is down for it), the rotation skips to the next one.
+
+Screens that show the whole region (Regional map, Travel, Latest Observations) look the same for every city and play every cycle, as upstream would.
+
+How it works: `navigation.mjs` calls the rotation when the cycle would wrap from the last screen to the first. `modules/atv-rotation.mjs` then holds the current screen, marks every screen as loading, and loads the next city through the same path a location search uses. The viewer's saved location isn't changed.
 
 ## Geography
 
