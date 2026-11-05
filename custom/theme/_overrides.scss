@@ -35,7 +35,7 @@
 }
 
 // labels that used the all-caps Star4000 Small face; Chivo Mono has real lowercase
-.weather-display .main.hourly .column-headers div,
+.weather-display .main.hourly.main .column-headers div,
 .weather-display .latest-observations .column-headers div,
 #hourly-graph-html .legend,
 .weather-display .main.hourly-graph .chart-container .label {
@@ -77,24 +77,41 @@ $header-shift: 120px;
 	}
 }
 
-// scrolling screens (Hourly, Travel): make the column header bar 4px taller upward, so it
-// overlaps the header band instead of meeting it edge to edge. When the display is scaled
-// (TVs, resized windows) two things showed through as a thin dark line at that edge: the
-// background art's band edge (resampled) and, once the list scrolls, the rows passing under
-// the bar's anti-aliased top edge. The extra height matches the band color, so nothing
-// visibly moves at 1:1.
+// scrolling screens (Hourly, Travel): keep the scrolling rows from showing above the column
+// header bar. When the display is scaled (Chrome fullscreen, kiosk, TVs), Chrome can clip the
+// moving rows and the bar to different screen pixels, so a sliver of row text showed between
+// the header and the bar. The top few px of the scrolling area are masked out (the bar and
+// rows are flattened together first, so their edges always agree) and a strip of the band
+// color fills that space from behind; the strip also covers the background art's band edge.
+// At 1:1 the masked px were bar-colored anyway, so nothing visibly moves.
 $column-header-overlap: 4px;
+$scroll-mask-top: 3px;
 
-// covers the art edge: a strip along the bottom of the header, under the header text
-#hourly-html > .header,
-#travel-html > .header {
-	box-shadow: inset 0 (-$column-header-overlap) 0 c.$column-header;
+// one solid strip from 4px above to 4px below the header's bottom edge (a single fill, so it
+// has no internal edge to seam). As ::before it paints under the header text, and the scroll
+// area (a later sibling) paints over it except where its top is masked.
+#hourly-html > .header::before,
+#travel-html > .header::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -$column-header-overlap;
+	height: 2 * $column-header-overlap;
+	background-color: c.$column-header;
 }
 
-// covers the rows: the bar itself extends up over the top of the scrolling list
-#hourly-html .column-headers,
-#travel-html .column-headers {
-	box-shadow: 0 (-$column-header-overlap) 0 c.$column-header;
+#hourly-html .main.hourly,
+#travel-html .main.travel {
+	-webkit-mask-image: linear-gradient(to bottom, transparent $scroll-mask-top, #000 $scroll-mask-top);
+	mask-image: linear-gradient(to bottom, transparent $scroll-mask-top, #000 $scroll-mask-top);
+}
+
+// the column labels started at the very top of the bar; move them down by the masked amount so
+// they aren't clipped (upstream top: -14px). This also centers the ~14px labels in the 20px bar.
+.weather-display .main.hourly.main .column-headers div,
+.weather-display .main.travel.main .column-headers div {
+	top: -14px + $scroll-mask-top;
 }
 
 // splash screen title/status: upstream uses its own hard 4px shadow; match the soft one
