@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const displays = [];
+// ATV fork: called when the display cycle wraps; returns true if it handled the wrap
+let wrapHandler = null;
+const setWrapHandler = (handler) => {
+	wrapHandler = handler;
+};
 let playing = false;
 let progress;
 // false until a location is entered, and again after the reset button
@@ -179,6 +184,10 @@ const loadDisplay = (direction) => {
 		return;
 	}
 
+	// ATV fork: a full cycle ends when moving forward wraps back to an earlier display;
+	// the rotation (atv-rotation.mjs) can take over and load the next location instead
+	if (direction > 0 && curIdx >= 0 && idx <= curIdx && wrapHandler?.()) return;
+
 	const newDisplay = displays[idx];
 	// hide all displays
 	hideAllCanvases();
@@ -337,6 +346,7 @@ const resetDisplays = () => {
 };
 
 export {
+	setWrapHandler,
 	updateStatus,
 	resetDisplays,
 	isLocationActive,

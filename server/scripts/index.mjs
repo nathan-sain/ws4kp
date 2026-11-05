@@ -15,6 +15,8 @@ import { debugFlag } from './modules/utils/debug.mjs';
 import { parseQueryString } from './modules/utils/setting.mjs';
 import { Settings } from './vendor/auto/luxon.mjs';
 import { resize, isIOS } from './modules/utils/scaling.mjs';
+// ATV fork: optional rotation between the Regional map's communities (?rotate=true)
+import './modules/atv-rotation.mjs';
 
 // set luxon's default locale to en-US as the forecast text and other hard coded assets are only available in English
 Settings.defaultLocale = 'en-US';
