@@ -59,8 +59,30 @@ $header-shift: 120px;
 		left: 170px - $header-shift;
 	}
 
+	// moved into the free space right of the clock, so titles with the city have room (atv-titles.mjs)
 	.noaa-logo {
-		left: 356px - $header-shift;
+		left: 490px;
+	}
+
+	// city-specific titles (atv-titles.mjs): room up to the clock, on one line each;
+	// names longer than 12 characters are drawn smaller to fit
+	.title.atv-city-title {
+		width: 280px;
+		white-space: nowrap;
+
+		.top,
+		.atv-top {
+			font-size: calc(1em * var(--atv-city-fit, 1));
+		}
+
+		// Hourly Graph's title lines (see atv-titles.mjs), placed like upstream's .title.dual .top/.bottom
+		.atv-top {
+			top: -3px;
+		}
+
+		.atv-bottom {
+			top: 26px;
+		}
 	}
 
 	.date-time {

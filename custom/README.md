@@ -43,8 +43,9 @@ custom/
 | `compose.yaml` | new file | `docker compose build` / `up` for the ATV image |
 | `.github/workflows/atv-build.yaml` | new file | CI for `atv/main`: compose build, smoke test, JSON artifact |
 | `server/scripts/modules/navigation.mjs` | small hooks (marked `ATV fork`): cycle-wrap handler, hold the current display during a location change, guard for an upstream `showDisplay(undefined)` | location rotation without blank frames |
-| `server/scripts/index.mjs` | +1 import | loads `modules/atv-rotation.mjs` |
+| `server/scripts/index.mjs` | +2 imports | loads `modules/atv-rotation.mjs` and `modules/atv-titles.mjs` |
 | `server/scripts/modules/atv-rotation.mjs` | new file | location rotation |
+| `server/scripts/modules/atv-titles.mjs` | new file | location in the titles of city-specific screens |
 | `server/scripts/modules/regionalforecast.mjs` | +1 import, 2 small hooks (marked `ATV fork`) | fixed map center; per-city label offsets |
 | `server/scripts/modules/atv-region.mjs` | new file (generated, committed) | map center from `region.config.mjs` |
 | `server/images/backgrounds/atv/` | new folder | ATV background art; upstream images are left in place |
@@ -103,6 +104,33 @@ docker buildx build -f custom/docker/Dockerfile --target export --output type=lo
 If `atv/main` becomes private, the Git build context needs credentials, for example a `GIT_AUTH_TOKEN` build secret. Alternatively, clone the repo and use `ATV_SOURCE=.`.
 
 **CI:** `.github/workflows/atv-build.yaml` runs on every push and pull request to `atv/main`, and manually with an option to refresh the grid points. It builds the image with `docker compose build`, starts it, and checks that the page, data, fonts and backgrounds load and that every community is in the Travel data. It then uploads the generated JSON as the `ws4kp-atv-data` artifact. Upstream's own workflows only run on upstream's branch names and on pull requests, so they don't fire for `atv/main` pushes.
+
+## Location in the titles
+
+City-specific screens show the location in their title, with the city on the top line (`modules/atv-titles.mjs`):
+
+| Screen | Title |
+|---|---|
+| Current Conditions | *City* / Conditions, or *City* / Recent Conditions when upstream marks the data stale |
+| Local Forecast | *City* / Forecast |
+| Extended Forecast | *City* / Extended Forecast |
+| Hourly Forecast | *City* / Hourly Forecast |
+| Hourly Graph | *City* / Hourly Graph |
+| Almanac | *City* / Almanac |
+| Climate | *City* / Climate |
+| Local / Future Radar | *City* / Radar, *City* / Future Radar |
+
+Region-wide screens (Regional, Travel, Latest Observations), the SPC Outlook and Hazards keep their upstream titles.
+
+- **Source:** the city is the location the app reports to the headend tab (the state suffix is dropped), so it follows searches and the rotation.
+- **Timing:** a screen that's on screen when the location changes keeps its title until it goes off screen, so a title never changes over the data it belongs to.
+- **Long names:** names over 12 characters are drawn smaller to fit before the clock.
+- **NOAA logo:** moved into the free space right of the clock (x 490) to make room for the city.
+
+The module rewrites title markup at runtime, so the EJS templates are unchanged. Two upstream behaviors it works with:
+
+- Current Conditions rewrites its title's top line on every draw ("Current"/"Recent"). The module reads that word, then puts the city back before the frame is painted.
+- Hourly Graph looks up its chart areas with the bare selectors `.top`/`.bottom`, so its title lines use `atv-top`/`atv-bottom` instead.
 
 ## Location rotation
 
